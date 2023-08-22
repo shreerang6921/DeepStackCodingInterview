@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import UpdateNotes from "./UpdateNotes";
+import DisplayNotes from "./DisplayNotes";
 
 export default function Notes() {
   const [notes, setNotes] = useState();
   const [newNote, setNewNote] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [updateClicked, setUpdateClicked] = useState(false);
-  const [updateValue, setUpdateValue] = useState("");
   const [noteToUpdate, setNoteToUpdate] = useState("");
 
   const getData = async () => {
@@ -59,50 +60,13 @@ export default function Notes() {
     setUpdateClicked(true);
   };
 
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    console.log(noteToUpdate, updateValue);
-    const res = await fetch("http://localhost:8000/api/notes", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: noteToUpdate.title,
-        note: updateValue,
-      }),
-    });
-    const data = await res.json();
-    console.log(data);
-    getData();
-    setUpdateClicked(false);
-  };
   return (
     <div className=" m-6 p-6">
-      <ul className=" flex m-2 p-2 justify-start flex-col align-middle">
-        {notes &&
-          notes.map((note) => {
-            return (
-              <div key={note._id} className="flex gap-3 items-center">
-                <button
-                  className="border-2 border-black p-3 mt-2 rounded-md "
-                  onClick={() => handleUpdate(note)}
-                >
-                  update
-                </button>
-
-                <li
-                  className="border-black border-b-2"
-                  onClick={() => {
-                    handleDelete(note);
-                  }}
-                >
-                  {note.note}
-                </li>
-              </div>
-            );
-          })}
-      </ul>
+      <DisplayNotes
+        notes={notes}
+        handleUpdate={handleUpdate}
+        handleDelete={handleDelete}
+      />
 
       <form onSubmit={handleCreateNote}>
         <label htmlFor="title">title</label>
@@ -130,20 +94,11 @@ export default function Notes() {
       </form>
 
       {updateClicked && (
-        <form onSubmit={handleUpdateSubmit} className="m-6 p-6">
-          <input
-            className=" border-black border-2 rounded-md m-2 p-2"
-            value={updateValue}
-            onChange={(e) => {
-              setUpdateValue(e.target.value);
-            }}
-          />
-          <input
-            type="submit"
-            value="update note"
-            className="border-2 border-green-500  rounded-md m-2 p-2"
-          />
-        </form>
+        <UpdateNotes
+          noteToUpdate={noteToUpdate}
+          getData={getData}
+          setUpdateClicked={setUpdateClicked}
+        />
       )}
     </div>
   );
