@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 
 export default function Notes() {
   const [notes, setNotes] = useState();
+  const [newNote, setNewNote] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [updateClicked, setUpdateClicked] = useState(false);
+  const [updateValue, setUpdateValue] = useState("");
+  const [noteToUpdate, setNoteToUpdate] = useState("");
 
-  const [newNote, setNewNote] = useState();
-  const [newTitle, setNewTitle] = useState();
-  const [updateClicked, setUpdateClicked] = useState();
-
-  const [updateValue, setUpdateValue] = useState();
   const getData = async () => {
     const res = await fetch("http://localhost:8000/api/notes");
     const data = await res.json();
@@ -18,9 +18,12 @@ export default function Notes() {
     getData();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleCreateNote = async (e) => {
     e.preventDefault();
-
+    const duplicateNote = notes.filter((note) => note.title === newTitle);
+    if (duplicateNote.length > 0) {
+      return;
+    }
     const res = await fetch("http://localhost:8000/api/notes", {
       method: "POST",
       headers: {
@@ -35,7 +38,7 @@ export default function Notes() {
     getData();
   };
 
-  const handleClick = async (note) => {
+  const handleDelete = async (note) => {
     const res = await fetch("http://localhost:8000/api/notes", {
       method: "DELETE",
       headers: {
@@ -51,19 +54,21 @@ export default function Notes() {
     getData();
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = (note) => {
+    setNoteToUpdate(note);
     setUpdateClicked(true);
   };
 
-  const handleUpdateSubmit = async (e, note) => {
+  const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    console.log(noteToUpdate, updateValue);
     const res = await fetch("http://localhost:8000/api/notes", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        title: note.title,
+        title: noteToUpdate.title,
         note: updateValue,
       }),
     });
@@ -74,28 +79,22 @@ export default function Notes() {
   };
   return (
     <div className=" m-6 p-6">
-      <ul>
+      <ul className=" flex m-2 p-2 justify-start flex-col align-middle">
         {notes &&
           notes.map((note) => {
             return (
-              <div key={note._id} className="flex gap-3">
-                <button onClick={(note) => handleUpdate(note)}>update</button>
-
-                {updateClicked && (
-                  <form onSubmit={(note) => handleUpdateSubmit(note)}>
-                    <input
-                      value={updateValue}
-                      onChange={(e) => {
-                        setUpdateValue(e.target.value);
-                      }}
-                    />
-                    <input type="submit" value="update note" />
-                  </form>
-                )}
+              <div key={note._id} className="flex gap-3 items-center">
+                <button
+                  className="border-2 border-black p-3 mt-2 rounded-md "
+                  onClick={() => handleUpdate(note)}
+                >
+                  update
+                </button>
 
                 <li
+                  className="border-black border-b-2"
                   onClick={() => {
-                    handleClick(note);
+                    handleDelete(note);
                   }}
                 >
                   {note.note}
@@ -105,26 +104,47 @@ export default function Notes() {
           })}
       </ul>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleCreateNote}>
         <label htmlFor="title">title</label>
         <input
+          className=" border-black border-2 rounded-md m-2 p-2"
           type="text"
           id="title"
           value={newTitle}
-          className=" border-2"
           onChange={(e) => setNewTitle(e.target.value)}
         />
         <label htmlFor="note">note</label>
         <input
+          className=" border-black border-2 rounded-md m-2 p-2"
           type="text"
           id="note"
           value={newNote}
-          className=" border-2"
           onChange={(e) => setNewNote(e.target.value)}
         />
 
-        <input type="submit" value="submit notes" />
+        <input
+          type="submit"
+          value="submit notes"
+          className="border-2 border-green-500  rounded-md m-2 p-2"
+        />
       </form>
+
+      {updateClicked && (
+        <form onSubmit={handleUpdateSubmit} className="m-6 p-6">
+          <input
+            className=" border-black border-2 rounded-md m-2 p-2"
+            value={updateValue}
+            onChange={(e) => {
+              setUpdateValue(e.target.value);
+            }}
+          />
+          <input
+            type="submit"
+            value="update note"
+            className="border-2 border-green-500  rounded-md m-2 p-2"
+          />
+        </form>
+      )}
     </div>
   );
 }
