@@ -1,5 +1,8 @@
 const express = require("express");
 const Todo = require("./models/todo");
+const User = require("./models/user");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const router = express.Router();
 
 router.get("/api/notes", async (req, res) => {
@@ -41,6 +44,37 @@ router.patch("/api/notes", async (req, res) => {
     res.json({ message: "success" });
   } catch (e) {
     console.log(e);
+  }
+});
+
+router.post("/api/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const encryptedPass = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      email,
+      password: encryptedPass,
+    });
+    res.json({ message: "register successful" });
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+router.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.json({ message: "user not found" });
+  }
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+  if (!isPasswordCorrect) {
+    res.json({ message: "incorrect email or password" });
+  } else {
+    const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY);
+
+    res.json({ message: "login successful", AuthToken: token });
   }
 });
 
